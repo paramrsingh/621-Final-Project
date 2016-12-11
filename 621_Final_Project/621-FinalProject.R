@@ -97,24 +97,27 @@ plot(ols2t)
 olsresidual2t <- resid(ols2t)
 hist(olsresidual2t)
 skewness(olsresidual2t)
-
 #The fit values aren't that bad from the diagnostic plots, all things considered
 
 
 #compare these to ridge regression, lasso, regression trees, random forests, boosting, etc
-#other categorical variables should prove interesting (bedrooms and bathrooms)
+
 library(glmnet)
 
+#change NA's in yr_renovated back to 0's for sparse matrix support
+training$yr_renovated[is.na(training$yr_renovated)] <- 0
+attach(training)
+X <- sparse.model.matrix(~.,training[c(-1,-2,-3)])
 #lasso
-X <- sparse.model.matrix(~.,training[c(-1,-3)])
 lassofit <- glmnet(X, price, alpha=1, family='gaussian')
+plot(lassofit, xvar="lambda", label=TRUE)
+print(lassofit)
+summary(lassofit)
+coef(lassofit)[,10]
+
 #ridge
 ridgefit <- glmnet(X, price, alpha=0, family='gaussian')
-#plots
-plot(lassofit, xvar="lambda", label=TRUE)
 plot(ridgefit, xvar="lambda", label=TRUE)
-print(lassofit)
 print(ridgefit)
-coef(lassofit)[,10]
 coef(ridgefit)[,10]
 
