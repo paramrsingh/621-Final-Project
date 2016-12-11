@@ -114,10 +114,18 @@ plot(lassofit, xvar="lambda", label=TRUE)
 print(lassofit)
 summary(lassofit)
 coef(lassofit)[,10]
+# use the package to select the optimal
+lassofit.cv <- cv.glmnet(X, price)
+plot(lassofit.cv)
+# gives the coefficient for the best model
+coef(lassofit.cv)
 
 #ridge
 ridgefit <- glmnet(X, price, alpha=0, family='gaussian')
 plot(ridgefit, xvar="lambda", label=TRUE)
 print(ridgefit)
 coef(ridgefit)[,10]
+ridgefit.cv <- cv.glmnet(X, price)
+plot(ridgefit.cv)
+coef(ridgefit.cv)
 
