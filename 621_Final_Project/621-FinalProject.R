@@ -40,6 +40,7 @@ plot(kcdata$sqft_lot15, kcdata$price, xlab='sqft_lot15', ylab='price', main='Sqf
 
 #segment into training and evaluation data frames
 library(caret)
+set.seed(101)
 kctrain <- createDataPartition(y=kcdata$price, p=.75, list=FALSE)
 training <- kcdata[kctrain,]
 evaluation <- kcdata[-kctrain,]
@@ -129,3 +130,17 @@ ridgefit.cv <- cv.glmnet(X, price)
 plot(ridgefit.cv)
 coef(ridgefit.cv)
 
+
+
+
+####Prediction
+predict_ols2=predict(ols2,evaluation)
+sqrt(mean((predict_ols2 - evaluation$price)^2))
+predict_ols2t=predict(ols2,evaluation)^(-1/.02)
+sqrt(mean((predict_ols2t - evaluation$price)^2))
+
+#Write Prediction
+prediction=NULL
+prediction$id=evaluation$id
+prediction$price=predict_ols2
+write.csv(prediction,"predictions_ols2.csv",row.names=F)
