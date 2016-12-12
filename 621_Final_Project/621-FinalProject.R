@@ -149,3 +149,10 @@ prediction_ols2t=NULL
 prediction_ols2t$id=evaluation$id
 prediction_ols2t$price=predict_ols2t
 write.csv(prediction,"predictions_ols2t.csv",row.names=F)
+
+#predict for glmnet
+evaluation$yr_renovated[is.na(evaluation$yr_renovated)] <- 0
+attach(evaluation)
+evalX <- sparse.model.matrix(~.,evaluation[c(-1,-2,-3)])
+lassoprediction <- predict(lassofit.cv, evalX)
+ridgeprediction <- predict(ridgefit.cv, evalX)
