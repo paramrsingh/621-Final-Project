@@ -42,6 +42,9 @@ plot(kcdata$sqft_lot15, kcdata$price, xlab='sqft_lot15', ylab='price', main='Sqf
 library(caret)
 set.seed(101)
 kctrain <- createDataPartition(y=kcdata$price, p=.75, list=FALSE)
+if (!(19453 %in% kctrain)){
+  kctrain = rbind(kctrain,19453)
+}
 training <- kcdata[kctrain,]
 evaluation <- kcdata[-kctrain,]
 attach(training)
@@ -156,3 +159,6 @@ attach(evaluation)
 evalX <- sparse.model.matrix(~.,evaluation[c(-1,-2,-3)])
 lassoprediction <- predict(lassofit.cv, evalX)
 ridgeprediction <- predict(ridgefit.cv, evalX)
+
+sqrt(mean((lassoprediction - evaluation$price)^2))
+sqrt(mean((ridgeprediction - evaluation$price)^2))
