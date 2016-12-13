@@ -93,6 +93,7 @@ skewness(olsresidual2)
 bc2 <- boxcox(ols2)
 trans2 <- bc2$x[which.max(bc2$y)]
 #apply transform and replot
+#Model 1
 ols2t <- lm(price^-0.02 ~  sqft_living + sqft_above + sqft_living15)
 #Multiple R-squared:  0.5054,  Adjusted R-squared:  0.5053
 summary(ols2t)
@@ -102,6 +103,34 @@ olsresidual2t <- resid(ols2t)
 hist(olsresidual2t)
 skewness(olsresidual2t)
 #The fit values aren't that bad from the diagnostic plots, all things considered
+
+#Add categorical variables to ols model
+training$waterfront=as.factor(training$waterfront)
+training$condition=as.factor(training$condition)
+training$view=as.factor(training$view)
+
+evaluation$waterfront=as.factor(evaluation$waterfront)
+evaluation$condition=as.factor(evaluation$condition)
+evaluation$view=as.factor(evaluation$view)
+
+ols4 = lm(price ~  sqft_living + sqft_above + sqft_living15 + grade + 
+            + view + condition,data=training )
+summary(ols4)
+prediction_ols4=predict(ols4,newdata=evaluation)
+sqrt(mean((prediction_ols4 - evaluation$price)^2))
+bc4 <- boxcox(ols4)
+trans <- bc4$x[which.max(bc4$y)]
+print(trans)
+
+#Model 1a
+ols4t = lm(price^.02 ~  sqft_living + sqft_above + sqft_living15 + grade + 
+             + view + condition,data=training )
+summary(ols4t)
+prediction_ols4t=predict(ols4t,newdata=evaluation)^(1/.02)
+sqrt(mean((prediction_ols4t - evaluation$price)^2))
+AIC(ols4t)
+BIC(ols4t)
+plot(ols4t)
 
 
 #compare these to ridge regression, lasso, regression trees, random forests, boosting, etc
@@ -134,7 +163,18 @@ plot(ridgefit.cv)
 coef(ridgefit.cv)
 
 
+## Gradient Boosted Tree Model
+training$sqft_living=as.double(training$sqft_living)
+evaluation$sqft_living=as.double(evaluation$sqft_living)
 
+xgb1 = xgboost(data = data.matrix(training[,c("sqft_living",
+                                              "sqft_above","sqft_living15","grade")]),
+               label = data.matrix(training$price), 
+               max.depth = 2, eta = 1, nround = 50,
+               nthread = 2, objective = "reg:linear")
+prediction_xgb1=predict(xgb1,data.matrix(evaluation[,c("sqft_living",
+                                                       "sqft_above","sqft_living15","grade")]))
+sqrt(mean((prediction_xgb1 - evaluation$price)^2))
 
 ####Prediction
 predict_ols2=predict(ols2,evaluation)
@@ -142,16 +182,7 @@ sqrt(mean((predict_ols2 - evaluation$price)^2))
 predict_ols2t=predict(ols2t,evaluation)^(-1/.02)
 sqrt(mean((predict_ols2t - evaluation$price)^2))
 
-#Write Prediction
-prediction_ols2=NULL
-prediction_ols2$id=evaluation$id
-prediction_ols2$price=predict_ols2
-write.csv(prediction,"predictions_ols2.csv",row.names=F)
 
-prediction_ols2t=NULL
-prediction_ols2t$id=evaluation$id
-prediction_ols2t$price=predict_ols2t
-write.csv(prediction,"predictions_ols2t.csv",row.names=F)
 
 #predict for glmnet
 evaluation$yr_renovated[is.na(evaluation$yr_renovated)] <- 0
@@ -162,3 +193,10 @@ ridgeprediction <- predict(ridgefit.cv, evalX)
 
 sqrt(mean((lassoprediction - evaluation$price)^2))
 sqrt(mean((ridgeprediction - evaluation$price)^2))
+
+
+prediction_ols2t=NULL
+prediction_ols2t$id=evaluation$id
+prediction_ols2t$price=ridgeprediction
+#Prediction for selected model
+write.csv(prediction,"predictions_ridge.csv",row.names=F)
